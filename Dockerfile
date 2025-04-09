@@ -10,7 +10,7 @@ RUN pip install -r requirements.txt
 COPY . /app/
 
 # Mở port 8000
-EXPOSE 3007
+EXPOSE 8000
 
 # Chạy ứng dụng với Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3007"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

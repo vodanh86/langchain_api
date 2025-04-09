@@ -6,4 +6,8 @@ docx2txt
 pypdf
 langchain_chroma
 python-multipart
-streamlit
+unstructured
+openpyxl
+python-magic
+python-pptx
+networkx

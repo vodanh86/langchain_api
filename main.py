@@ -29,8 +29,7 @@ def chat(query_input: QueryInput):
     references = []
     for context in contexts:
         metadata = context.metadata
-        references.append(
-            f"Trang: {metadata['page']}, Tài liệu: {metadata['source']}\n")
+        #references.append(f"Trang: {metadata['page']}, Tài liệu: {metadata['source']}\n")
 
     answer = answer['answer']
     #answer = answer['answer'] + "\n\n" + "\n".join(references)
@@ -44,9 +43,8 @@ import shutil
 
 @app.post("/upload-doc")
 def upload_and_index_document(file: UploadFile = File(...)):
-    allowed_extensions = ['.pdf', '.docx', '.html']
-    file_extension = os.path.splitext(file.filename)[1].lower()
-    
+    allowed_extensions = ["pdf", "docx", "html", "txt", "csv", "json", "xlsx", "xlsx", "pptx"]
+    file_extension = os.path.splitext(file.filename)[1].lower().strip(".")
     if file_extension not in allowed_extensions:
         raise HTTPException(status_code=400, detail=f"Unsupported file type. Allowed types are: {', '.join(allowed_extensions)}")
     

@@ -1,1 +1,1 @@
-docker run -v /Users/cuongdm/Documents/repo/projects/LangchainDemo1/rag_db:/app/rag_db -v /Users/cuongdm/Documents/repo/projects/LangchainDemo1/chroma_db:/app/chroma_db -p 3007:3007 langchain-api
+docker run -v /Users/cuongdm/Documents/repo/projects/LangchainDemo1/rag_db:/app/rag_db -v /Users/cuongdm/Documents/repo/projects/LangchainDemo1/chroma_db:/app/chroma_db -p 8000:8000 langchain-api
