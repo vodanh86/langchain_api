@@ -11,3 +11,4 @@ openpyxl
 python-magic
 python-pptx
 networkx
+pandas
