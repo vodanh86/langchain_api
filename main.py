@@ -6,7 +6,7 @@ from chroma_utils import index_document_to_chroma, delete_doc_from_chroma
 import os
 import uuid
 import logging
-logging.basicConfig(filename='app.log', level=logging.INFO)
+logging.basicConfig(filename='data/app.log', level=logging.INFO)
 app = FastAPI()
 
 

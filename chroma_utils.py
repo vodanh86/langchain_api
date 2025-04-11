@@ -17,7 +17,7 @@ openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=200, length_function=len)
 embedding_function = OpenAIEmbeddings()
-vectorstore = Chroma(persist_directory="./chroma_db", embedding_function=embedding_function)
+vectorstore = Chroma(persist_directory="./data/chroma_db", embedding_function=embedding_function)
 
 def load_and_split_document(file_path: str) -> List[Document]:
     if file_path.endswith('.pdf'):
@@ -38,15 +38,11 @@ def load_and_split_document(file_path: str) -> List[Document]:
 
 def index_document_to_chroma(file_path: str, file_id: int) -> bool:
     try:
-        print(123)
         splits = load_and_split_document(file_path)
-        print(splits)
         # Add metadata to each split
         for split in splits:
             split.metadata['file_id'] = file_id
-        print(5)
         vectorstore.add_documents(splits)
-        print(6)
         # vectorstore.persist()
         return True
     except Exception as e:
