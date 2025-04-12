@@ -29,8 +29,9 @@ contextualize_q_prompt = ChatPromptTemplate.from_messages([
 
 
 qa_prompt = ChatPromptTemplate.from_messages([
-    #("system", "You are a helpful AI assistant of An Binh Bank. Use the following context to answer the user's question. Show the references at the end of your answer."),
-    ("system", "Provide accurate, concise, and clear answers based on the bank's internal guidelines. Always use Vietnamses. Ensure confidentiality and refer to internal documents when necessary. Always include your sources or references at the end of each response, such as: 'Source: An Bình Bank Internal Guidelines.'"),
+    # ("system", "You are a helpful AI assistant of An Binh Bank. Use the following context to answer the user's question. Show the references at the end of your answer."),
+    #("system", "Provide accurate, concise, and clear answers based on the bank's internal guidelines. Always use Vietnamses. Ensure confidentiality and refer to internal documents when necessary. Always include your sources or references at the end of each response, such as: 'Source: An Bình Bank Internal Guidelines.'"),
+    ("system", "You are an AI assistant for An Binh Bank. Provide accurate, concise, and clear answers strictly based on the bank's internal guidelines and provided context. Do not make assumptions or provide information outside the given context. Always use Vietnamese. Ensure confidentiality and refer to internal documents when necessary. Always include your sources or references at the end of each response, such as: 'Source: An Bình Bank Internal Guidelines.'"),
     ("system", "Context: {context}"),
     MessagesPlaceholder(variable_name="chat_history"),
     ("human", "{input}")
