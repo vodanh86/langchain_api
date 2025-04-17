@@ -12,3 +12,4 @@ python-magic
 python-pptx
 networkx
 pandas
+hvac

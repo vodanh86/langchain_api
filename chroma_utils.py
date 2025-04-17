@@ -4,16 +4,10 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
 from typing import List
 from langchain_core.documents import Document
-from dotenv import load_dotenv, find_dotenv
-import os
+from hvac_util import get_openai_key
 import openai
-import sys
 
-
-sys.path.append('.')
-_ = load_dotenv(find_dotenv())
-
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+openai.api_key = get_openai_key()
 
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=200, length_function=len)
 embedding_function = OpenAIEmbeddings()
