@@ -8,24 +8,14 @@ import uuid
 import json
 import logging
 
-# Load logging configuration
-log_config_path = "logging_config.json"
-if os.path.exists(log_config_path):
-    with open(log_config_path, "r") as f:
-        log_config = json.load(f)
-    logging.config.dictConfig(log_config)
-else:
-    logging.basicConfig(level=logging.INFO)
-    logging.warning("Logging configuration file not found. Using default configuration.")
-
-logger = logging.getLogger('Logger_Example')
+logging.basicConfig(filename='data/app.log', level=logging.INFO)
 app = FastAPI()
 
 
 @app.post("/chat", response_model=QueryResponse)
 def chat(query_input: QueryInput):
     session_id = query_input.session_id
-    logger.info(
+    logging.info(
         f"Session ID: {session_id}, User Query: {query_input.question}, Model: {query_input.model.value}")
     if not session_id:
         session_id = str(uuid.uuid4())
@@ -46,7 +36,7 @@ def chat(query_input: QueryInput):
     answer = answer['answer']
     #answer = answer['answer'] + "\n\n" + "\n".join(references)
     insert_application_logs(session_id, query_input.question, answer, query_input.model.value)
-    logger.info(f"Session ID: {session_id}, AI Response: {answer}")
+    logging.info(f"Session ID: {session_id}, AI Response: {answer}")
     return QueryResponse(answer=answer, session_id=session_id, model=query_input.model)
 
 from fastapi import UploadFile, File, HTTPException

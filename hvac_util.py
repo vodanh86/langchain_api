@@ -14,6 +14,6 @@ def get_openai_key():
 
     read_response = client.secrets.kv.read_secret_version(
         path='ai', mount_point='ai-platform')
-    api_key = read_response['data']['data']['OpenAIKey']
+    api_key = read_response['data']['data']['ChatGPTKey']
     os.environ['OPENAI_API_KEY'] = api_key
     return api_key
