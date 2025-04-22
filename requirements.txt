@@ -13,3 +13,6 @@ python-pptx
 networkx
 pandas
 hvac
+pytesseract 
+pdf2image 
+Pillow

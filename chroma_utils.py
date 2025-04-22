@@ -3,6 +3,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
 from typing import List
+import pytesseract
+from pdf2image import convert_from_path
 from langchain_core.documents import Document
 from hvac_util import get_openai_key
 import openai
@@ -13,21 +15,42 @@ text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=20
 embedding_function = OpenAIEmbeddings()
 vectorstore = Chroma(persist_directory="./data/chroma_db", embedding_function=embedding_function)
 
-def load_and_split_document(file_path: str) -> List[Document]:
+def load_and_split_document(file_path: str):
     if file_path.endswith('.pdf'):
-        loader = PyPDFLoader(file_path)
+        try:
+            # Thử tải bằng loader bình thường
+            loader = PyPDFLoader(file_path)
+            documents = loader.load()
+            # Nếu không có nội dung, fallback sang OCR
+            if not documents or all(len(doc.page_content.strip()) == 0 for doc in documents):
+                raise ValueError("Empty text content")
+        except Exception:
+            print("Falling back to OCR for scanned PDF...")
+            # OCR xử lý
+            images = convert_from_path(file_path)
+            text = ""
+            for i, image in enumerate(images):
+                image_text = pytesseract.image_to_string(image, lang='vie')
+                print(image_text)
+                text += image_text
+                text += "\n\n--- Page Break ---\n\n"
+            print(text)
+            documents = [Document(page_content=text, metadata={"source": file_path})]
     elif file_path.endswith('.docx'):
         loader = Docx2txtLoader(file_path)
+        documents = loader.load()
     elif file_path.endswith('.html'):
         loader = UnstructuredHTMLLoader(file_path)
+        documents = loader.load()
     elif file_path.endswith('.pptx'):
         loader = UnstructuredPowerPointLoader(file_path)
+        documents = loader.load()
     elif file_path.endswith('.xlsx'):
         loader = UnstructuredExcelLoader(file_path)
+        documents = loader.load()
     else:
         raise ValueError(f"Unsupported file type: {file_path}")
     
-    documents = loader.load()
     return text_splitter.split_documents(documents)
 
 def index_document_to_chroma(file_path: str, file_id: int) -> bool:
