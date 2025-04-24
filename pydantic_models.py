@@ -15,6 +15,7 @@ class QueryResponse(BaseModel):
     answer: str
     session_id: str
     model: ModelName
+    contexts: str
 
 class DocumentInfo(BaseModel):
     id: int
