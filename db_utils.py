@@ -32,10 +32,11 @@ def insert_application_logs(session_id, user_query, gpt_response, model):
     conn.close()
 
 def get_chat_history(session_id):
-    logging.info(f"Fetching chat history for session_id={session_id}.")
+    logging.info(f"Fetching the last 10 chat history entries for session_id={session_id}.")
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT user_query, gpt_response FROM application_logs WHERE session_id = ? ORDER BY created_at', (session_id,))
+    # Truy vấn 10 câu hỏi gần nhất
+    cursor.execute('SELECT user_query, gpt_response FROM application_logs WHERE session_id = ? ORDER BY created_at DESC LIMIT 10', (session_id,))
     messages = []
     for row in cursor.fetchall():
         messages.extend([
@@ -43,6 +44,8 @@ def get_chat_history(session_id):
             {"role": "ai", "content": row['gpt_response']}
         ])
     conn.close()
+    # Đảo ngược danh sách để trả về theo thứ tự thời gian (cũ -> mới)
+    messages.reverse()
     return messages
 
 def create_document_store():

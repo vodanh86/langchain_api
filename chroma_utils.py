@@ -11,7 +11,7 @@ import openai
 
 openai.api_key = get_openai_key()
 
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=200, length_function=len)
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=200, length_function=len)
 embedding_function = OpenAIEmbeddings()
 vectorstore = Chroma(persist_directory="./data/chroma_db", embedding_function=embedding_function)
 
