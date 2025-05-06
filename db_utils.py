@@ -5,6 +5,22 @@ import logging
 logging.basicConfig(filename='data/db.log', level=logging.INFO)
 DB_NAME = "data/rag_app.db"
 
+# Dictionary lưu số lượt câu hỏi của người dùng
+user_question_count = {}
+
+def get_user_question_count(user_id: str) -> int:
+    today = datetime.now().strftime("%Y-%m-%d")
+    key = f"{user_id}:{today}"
+    return user_question_count.get(key, 0)
+
+def increment_user_question_count(user_id: str):
+    today = datetime.now().strftime("%Y-%m-%d")
+    key = f"{user_id}:{today}"
+    if key in user_question_count:
+        user_question_count[key] += 1
+    else:
+        user_question_count[key] = 1
+
 def get_db_connection():
     logging.info("Establishing database connection.")
     conn = sqlite3.connect(DB_NAME)

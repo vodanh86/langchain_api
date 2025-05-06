@@ -1,18 +1,24 @@
 from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, UnstructuredHTMLLoader, UnstructuredPowerPointLoader, UnstructuredExcelLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings
 from langchain_chroma import Chroma
 from typing import List
 import pytesseract
 from pdf2image import convert_from_path
 from langchain_core.documents import Document
-from hvac_util import get_openai_key
-import openai
+from hvac_util import get_azure_openai_config
 
-openai.api_key = get_openai_key()
+# Lấy cấu hình từ Azure OpenAI
+azure_config = get_azure_openai_config()
+
+# Cấu hình OpenAIEmbeddings để sử dụng Azure OpenAI
+embedding_function = AzureOpenAIEmbeddings(
+    model="text_embedding_ada_002",
+    # dimensions: Optional[int] = None, # Can specify dimensions with new text-embedding-3 models
+    # openai_api_version=..., # If not provided, will read env variable AZURE_OPENAI_API_VERSION
+)
 
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=200, length_function=len)
-embedding_function = OpenAIEmbeddings()
 vectorstore = Chroma(persist_directory="./data/chroma_db", embedding_function=embedding_function)
 
 def load_and_split_document(file_path: str):

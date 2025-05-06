@@ -1,7 +1,7 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from pydantic_models import QueryInput, QueryResponse, DocumentInfo, DeleteFileRequest
 from langchain_utils import get_rag_chain
-from db_utils import insert_application_logs, get_chat_history, get_all_documents, insert_document_record, delete_document_record
+from db_utils import insert_application_logs, get_chat_history, get_all_documents, insert_document_record, delete_document_record, increment_user_question_count, get_user_question_count
 from chroma_utils import index_document_to_chroma, delete_doc_from_chroma
 import os
 import uuid
@@ -11,14 +11,31 @@ import logging
 logging.basicConfig(filename='data/app.log', level=logging.INFO)
 app = FastAPI()
 
+# Lấy giới hạn số câu hỏi từ file .env
+MAX_QUESTIONS_PER_DAY = int(os.getenv("MAX_QUESTIONS_PER_DAY", 10))
 
 @app.post("/chat", response_model=QueryResponse)
 def chat(query_input: QueryInput):
+
+    user_id = query_input.session_id  # Giả sử `user_id` là một trường trong request
+    print("user id " + str(user_id))
     session_id = query_input.session_id
     logging.info(
         f"Session ID: {session_id}, User Query: {query_input.question}, Model: {query_input.model.value}")
     if not session_id:
         session_id = str(uuid.uuid4())
+
+    # Kiểm tra số lượng câu hỏi của người dùng
+    question_count = get_user_question_count(user_id) if user_id else 0
+    print("question count " + str(question_count))
+    if question_count >= MAX_QUESTIONS_PER_DAY:
+        raise HTTPException(
+            status_code=429,
+            detail=f"You have reached the daily limit of {MAX_QUESTIONS_PER_DAY} questions."
+        )
+
+    # Tăng số lượng câu hỏi của người dùng
+    increment_user_question_count(user_id)
 
     chat_history = get_chat_history(session_id)
     rag_chain = get_rag_chain(query_input.model.value)

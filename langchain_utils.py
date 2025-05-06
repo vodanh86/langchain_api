@@ -1,11 +1,9 @@
-from langchain_openai import ChatOpenAI
+from langchain_openai import AzureChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
-from typing import List
-from langchain_core.documents import Document
-import os
+from hvac_util import get_azure_openai_config
 from chroma_utils import vectorstore
 retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
 
@@ -39,7 +37,16 @@ qa_prompt = ChatPromptTemplate.from_messages([
 
 
 def get_rag_chain(model="gpt-4o-mini"):
-    llm = ChatOpenAI(model=model, temperature=0.2,)
+    azure_config = get_azure_openai_config()
+
+    llm = AzureChatOpenAI(
+        azure_ad_token=azure_config["api_key"],
+        azure_endpoint=azure_config["endpoint"],
+        azure_deployment=azure_config["deployment_name"],
+        api_version=azure_config["api_version"],
+        temperature=0.2,
+    )
+
     history_aware_retriever = create_history_aware_retriever(
         llm, retriever, contextualize_q_prompt)
     question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
