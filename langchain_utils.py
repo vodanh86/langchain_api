@@ -7,6 +7,8 @@ from hvac_util import get_azure_openai_config
 from chroma_utils import vectorstore
 retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
 
+# Lấy cấu hình từ Azure OpenAI
+azure_config = get_azure_openai_config()
 output_parser = StrOutputParser()
 
 
@@ -37,7 +39,6 @@ qa_prompt = ChatPromptTemplate.from_messages([
 
 
 def get_rag_chain(model="gpt-4o-mini"):
-    azure_config = get_azure_openai_config()
 
     llm = AzureChatOpenAI(
         azure_ad_token=azure_config["api_key"],

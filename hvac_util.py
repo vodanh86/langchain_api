@@ -17,7 +17,8 @@ def get_azure_openai_config():
 
     read_response = client.secrets.kv.read_secret_version(
         path='ai', mount_point='ai-platform')
-    api_key = read_response['data']['data']['ChatGPTKey']'''
+    api_key = read_response['data']['data']['ChatGPTKey']
+    os.environ["AZURE_OPENAI_API_KEY" = api_key'''
     
     api_key = os.environ.get("AZURE_OPENAI_API_KEY")
     endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
