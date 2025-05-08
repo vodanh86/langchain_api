@@ -1,7 +1,7 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from pydantic_models import QueryInput, QueryResponse, DocumentInfo, DeleteFileRequest
 from langchain_utils import get_rag_chain
-from db_utils import insert_application_logs, get_chat_history, get_all_documents, insert_document_record, delete_document_record, increment_user_question_count, get_user_question_count
+from db_utils import insert_application_logs, get_chat_history, get_all_documents, insert_document_record, delete_document_record, increment_user_question_count, get_user_question_count, get_document_by_id
 from chroma_utils import index_document_to_chroma, delete_doc_from_chroma
 import os
 import uuid
@@ -61,7 +61,7 @@ import os
 import shutil
 
 @app.post("/upload-doc")
-def upload_and_index_document(file: UploadFile = File(...)):
+def upload_and_index_document(file: UploadFile = File(...), dept_id: int = Form(...),):
     allowed_extensions = ["pdf", "docx", "html", "txt", "csv", "json", "xlsx", "xlsx", "pptx"]
     file_extension = os.path.splitext(file.filename)[1].lower().strip(".")
     if file_extension not in allowed_extensions:
@@ -74,7 +74,7 @@ def upload_and_index_document(file: UploadFile = File(...)):
         with open(temp_file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        file_id = insert_document_record(file.filename)
+        file_id = insert_document_record(dept_id, file.filename)
         success = index_document_to_chroma(temp_file_path, file_id)
         
         if success:
@@ -87,11 +87,18 @@ def upload_and_index_document(file: UploadFile = File(...)):
             os.remove(temp_file_path)
 
 @app.get("/list-docs", response_model=list[DocumentInfo])
-def list_documents():
-    return get_all_documents()
+def list_documents(dept_id: int = 0):
+    return get_all_documents(dept_id)
 
 @app.post("/delete-doc")
 def delete_document(request: DeleteFileRequest):
+    # Kiểm tra quyền truy cập
+    document = get_document_by_id(request.file_id)
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    if document["dept_id"] != request.dept_id and request.dept_id != 0:
+        raise HTTPException(status_code=403, detail="You do not have permission to delete this document")
+
     # Delete from Chroma
     chroma_delete_success = delete_doc_from_chroma(request.file_id)
 

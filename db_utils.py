@@ -39,20 +39,25 @@ def create_application_logs():
                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     conn.close()
 
+
 def insert_application_logs(session_id, user_query, gpt_response, model):
-    logging.info(f"Inserting log into 'application_logs': session_id={session_id}, user_query={user_query}, model={model}")
+    logging.info(
+        f"Inserting log into 'application_logs': session_id={session_id}, user_query={user_query}, model={model}")
     conn = get_db_connection()
     conn.execute('INSERT INTO application_logs (session_id, user_query, gpt_response, model) VALUES (?, ?, ?, ?)',
                  (session_id, user_query, gpt_response, model))
     conn.commit()
     conn.close()
 
+
 def get_chat_history(session_id):
-    logging.info(f"Fetching the last 10 chat history entries for session_id={session_id}.")
+    logging.info(
+        f"Fetching the last 10 chat history entries for session_id={session_id}.")
     conn = get_db_connection()
     cursor = conn.cursor()
     # Truy vấn 10 câu hỏi gần nhất
-    cursor.execute('SELECT user_query, gpt_response FROM application_logs WHERE session_id = ? ORDER BY created_at DESC LIMIT 10', (session_id,))
+    cursor.execute(
+        'SELECT user_query, gpt_response FROM application_logs WHERE session_id = ? ORDER BY created_at DESC LIMIT 10', (session_id,))
     messages = []
     for row in cursor.fetchall():
         messages.extend([
@@ -64,28 +69,43 @@ def get_chat_history(session_id):
     messages.reverse()
     return messages
 
+
 def create_document_store():
     logging.info("Creating table 'document_store' if it does not exist.")
     conn = get_db_connection()
     conn.execute('''CREATE TABLE IF NOT EXISTS document_store
                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                     filename TEXT,
-                     upload_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+                    dept_id INTEGER,
+                    filename TEXT,
+                    upload_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     conn.close()
 
-def insert_document_record(filename):
-    logging.info(f"Inserting document record into 'document_store': filename={filename}.")
+
+def insert_document_record(dept_id, filename):
+    logging.info(
+        f"Inserting document record into 'document_store': filename={filename}.")
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO document_store (filename) VALUES (?)', (filename,))
+    cursor.execute(
+        "INSERT INTO document_store (filename, dept_id) VALUES (?, ?)",
+        (filename, dept_id)
+    )
     file_id = cursor.lastrowid
     conn.commit()
     conn.close()
     logging.info(f"Document record inserted with id={file_id}.")
     return file_id
 
+def get_document_by_id(file_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM document_store WHERE id = ?", (file_id,))
+    document = cursor.fetchone()
+    return dict(document) if document else None
+
 def delete_document_record(file_id):
-    logging.info(f"Deleting document record from 'document_store': file_id={file_id}.")
+    logging.info(
+        f"Deleting document record from 'document_store': file_id={file_id}.")
     conn = get_db_connection()
     conn.execute('DELETE FROM document_store WHERE id = ?', (file_id,))
     conn.commit()
@@ -93,15 +113,19 @@ def delete_document_record(file_id):
     logging.info(f"Document record with id={file_id} deleted successfully.")
     return True
 
-def get_all_documents():
+def get_all_documents(dept_id):
     logging.info("Fetching all documents from 'document_store'.")
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT id, filename, upload_timestamp FROM document_store ORDER BY upload_timestamp DESC')
+    if dept_id == 0:
+        cursor.execute("SELECT id, filename, dept_id, upload_timestamp FROM document_store  ORDER BY upload_timestamp DESC")
+    else:
+        cursor.execute("SELECT id, filename, dept_id, upload_timestamp FROM document_store WHERE dept_id = ? ORDER BY upload_timestamp DESC", (dept_id,))
     documents = cursor.fetchall()
     conn.close()
     logging.info(f"Fetched {len(documents)} documents.")
     return [dict(doc) for doc in documents]
+
 
 # Initialize the database tables
 create_application_logs()
