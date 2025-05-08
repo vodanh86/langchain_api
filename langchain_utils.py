@@ -45,7 +45,7 @@ def get_rag_chain(model="gpt-4o-mini"):
         azure_endpoint=azure_config["endpoint"],
         azure_deployment=azure_config["deployment_name"],
         api_version=azure_config["api_version"],
-        temperature=0.2,
+        temperature=0,
     )
 
     history_aware_retriever = create_history_aware_retriever(
