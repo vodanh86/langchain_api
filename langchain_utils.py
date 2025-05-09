@@ -1,3 +1,4 @@
+import json
 from langchain_openai import AzureChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, PromptTemplate
@@ -45,10 +46,10 @@ contextualize_q_prompt = ChatPromptTemplate.from_messages([
 
 
 qa_prompt = ChatPromptTemplate.from_messages([
-    # ("system", "You are a helpful AI assistant of An Binh Bank. Use the following context to answer the user's question. Show the references at the end of your answer."),
-    #("system", "Provide accurate, concise, and clear answers based on the bank's internal guidelines. Always use Vietnamses. Ensure confidentiality and refer to internal documents when necessary. Always include your sources or references at the end of each response, such as: 'Source: An Bình Bank Internal Guidelines.'"),
-    ("system", "You are an AI assistant for An Binh Bank. Provide accurate, concise, and clear answers strictly based on the bank's internal guidelines and provided context. Do not make assumptions or provide information outside the given context. Always use Vietnamese. Ensure confidentiality and refer to internal documents when necessary. Always include your sources or references at the end of each response, such as: 'Source: An Bình Bank Internal Guidelines.'"),
+    ("system", "You are an AI assistant for An Binh Bank. Provide accurate, concise, and clear answers strictly based on the bank's internal guidelines and provided context. Do not make assumptions or provide information outside the given context. Always use Vietnamese. Ensure confidentiality and refer to internal documents when necessary. Always include your sources or references at the end of each response, such as: 'Source: An Bình Bank Internal Guidelines.'. "
+    "If user ask for list of documents, provide the Available Documents in the format: '1. Document Name 1, 2. Document Name 2, ...'"),
     ("system", "Context: {context}"),
+    ("system", "Available Documents: {documents}"),  # Thêm danh sách tài liệu vào prompt
     MessagesPlaceholder(variable_name="chat_history"),
     ("human", "{input}")
 ])
@@ -64,9 +65,18 @@ def get_rag_chain(model="gpt-4o-mini"):
         temperature=0,
     )
 
+    # Lấy danh sách tài liệu từ VectorDB
+    docs = vectorstore.get(where={"is_summary": True})
+    document_set = set()
+
+    for doc in docs["metadatas"]:
+        document_set.add(doc["source"])
+   
+    document_list_str = "\n".join(document_set)
+
     history_aware_retriever = create_history_aware_retriever(
         llm, retriever, contextualize_q_prompt)
-    question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
+    question_answer_chain = create_stuff_documents_chain(llm, qa_prompt.partial(documents=document_list_str))
     rag_chain = create_retrieval_chain(
         history_aware_retriever, question_answer_chain)
     return rag_chain

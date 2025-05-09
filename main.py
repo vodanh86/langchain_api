@@ -18,7 +18,6 @@ MAX_QUESTIONS_PER_DAY = int(os.getenv("MAX_QUESTIONS_PER_DAY", 10))
 def chat(query_input: QueryInput):
 
     user_id = query_input.session_id  # Giả sử `user_id` là một trường trong request
-    print("user id " + str(user_id))
     session_id = query_input.session_id
     logging.info(
         f"Session ID: {session_id}, User Query: {query_input.question}, Model: {query_input.model.value}")
@@ -27,7 +26,6 @@ def chat(query_input: QueryInput):
 
     # Kiểm tra số lượng câu hỏi của người dùng
     question_count = get_user_question_count(user_id) if user_id else 0
-    print("question count " + str(question_count))
     if question_count >= MAX_QUESTIONS_PER_DAY:
         raise HTTPException(
             status_code=429,
@@ -67,7 +65,7 @@ def upload_and_index_document(file: UploadFile = File(...), dept_id: int = Form(
     if file_extension not in allowed_extensions:
         raise HTTPException(status_code=400, detail=f"Unsupported file type. Allowed types are: {', '.join(allowed_extensions)}")
     
-    temp_file_path = f"temp_{file.filename}"
+    temp_file_path = file.filename
 
     try:
         # Save the uploaded file to a temporary file

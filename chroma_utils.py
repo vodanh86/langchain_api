@@ -72,6 +72,8 @@ def index_document_to_chroma(file_path: str, file_id: int, summary) -> bool:
             split.metadata['file_id'] = file_id
             metadata = split.metadata
         vectorstore.add_documents(splits)
+
+        metadata['is_summary'] = True
         vectorstore.add_documents([Document(page_content=summary, metadata=metadata)])
         # vectorstore.persist()
         return True
