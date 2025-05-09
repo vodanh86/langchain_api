@@ -6,7 +6,7 @@ from langchain.chains import create_history_aware_retriever, create_retrieval_ch
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from hvac_util import get_azure_openai_config
 from chroma_utils import vectorstore, load_document
-retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
+retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
 
 # Lấy cấu hình từ Azure OpenAI
 azure_config = get_azure_openai_config()
