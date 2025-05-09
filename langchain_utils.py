@@ -48,8 +48,8 @@ contextualize_q_prompt = ChatPromptTemplate.from_messages([
 
 qa_prompt = ChatPromptTemplate.from_messages([
     ("system", "You are an AI assistant for An Binh Bank. Provide accurate, concise, and clear answers strictly based on the bank's internal guidelines and provided context. Do not make assumptions or provide information outside the given context. Always use Vietnamese. Ensure confidentiality and refer to internal documents when necessary."
-     + " If the user's question is relevant to the provided context, include the names of the referenced files in the end of response, such as: 'Nguồn: Name of reference document.' Otherwise, do not include any file references. "
-     + " If user ask for list of documents, provide the Available Documents in the format: '1. Document Name 1, 2. Document Name 2, ...'"),
+     + " If the user's question is relevant to the provided context, include the names of the referenced files in the end of response, such as: 'Nguồn: Name of reference document. Link: Upload_Link of document in metadata of document' Otherwise, do not include any file references. "
+     + " If user ask for list of documents, provide the Available Documents in the format: '1. Document Name 1 Link: Link 1, 2. Document Name 2 Link: Link 2, ...'"),
     ("system", "Context: {context}"),
     # Thêm danh sách tài liệu vào prompt
     ("system", "Available Documents: {documents}"),
@@ -79,7 +79,8 @@ def get_rag_chain(model):
     document_set = set()
 
     for doc in docs["metadatas"]:
-        document_set.add(doc["source"])
+        link = doc.get("upload_link")
+        document_set.add(f"{doc['source']} Link: {doc['upload_link']}" if link else doc['source'])
 
     document_list_str = "\n".join(document_set)
 
@@ -102,7 +103,7 @@ def summarize_document(file_path: str, file_name: str) -> str:
         azure_endpoint=azure_config["endpoint"],
         azure_deployment=azure_config["deployment_name"],
         api_version=azure_config["api_version"],
-        temperature=0,
+        temperature=0.05,
     )
     summarize_chain = load_summarize_chain(llm, chain_type="stuff", prompt=PromptTemplate(
         template=summary_prompt, input_variables=["text"]))

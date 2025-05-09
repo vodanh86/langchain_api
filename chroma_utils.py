@@ -37,10 +37,8 @@ def load_document(file_path: str) -> List[Document]:
             text = ""
             for i, image in enumerate(images):
                 image_text = pytesseract.image_to_string(image, lang='vie')
-                print(image_text)
                 text += image_text
                 text += "\n\n--- Page Break ---\n\n"
-            print(text)
             documents = [Document(page_content=text, metadata={"source": file_path})]
     elif file_path.endswith('.docx'):
         loader = Docx2txtLoader(file_path)
@@ -63,16 +61,18 @@ def load_and_split_document(file_path: str):
     documents = load_document(file_path)
     return text_splitter.split_documents(documents)
 
-def index_document_to_chroma(file_path: str, file_id: int, summary) -> bool:
+def index_document_to_chroma(file_path: str, file_id: int, summary, upload_link, effective_date) -> bool:
     try:
         splits = load_and_split_document(file_path)
         metadata = {}
         # Add metadata to each split
         for split in splits:
             split.metadata['file_id'] = file_id
+            split.metadata['upload_link'] = upload_link
+            split.metadata['effective_date'] = effective_date
             metadata = split.metadata
-        vectorstore.add_documents(splits)
 
+        vectorstore.add_documents(splits)
         metadata['is_summary'] = True
         vectorstore.add_documents([Document(page_content=summary, metadata=metadata)])
         # vectorstore.persist()

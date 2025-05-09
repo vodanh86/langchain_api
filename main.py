@@ -60,7 +60,7 @@ import os
 import shutil
 
 @app.post("/upload-doc")
-def upload_and_index_document(file: UploadFile = File(...), dept_id: int = Form(...),):
+def upload_and_index_document(file: UploadFile = File(...), dept_id: int = Form(...), upload_link: str = Form(...), effective_date: str = Form(...),):
     allowed_extensions = ["pdf", "docx", "html", "txt", "csv", "json", "xlsx", "xlsx", "pptx"]
     file_extension = os.path.splitext(file.filename)[1].lower().strip(".")
     if file_extension not in allowed_extensions:
@@ -75,8 +75,8 @@ def upload_and_index_document(file: UploadFile = File(...), dept_id: int = Form(
         
         # Tóm tắt tài liệu
         summary = summarize_document(temp_file_path, file.filename)
-        file_id = insert_document_record(dept_id, file.filename)
-        success = index_document_to_chroma(temp_file_path, file_id, summary)
+        file_id = insert_document_record(dept_id, file.filename, upload_link, effective_date)
+        success = index_document_to_chroma(temp_file_path, file_id, summary, upload_link, effective_date)
         
         if success:
             return {"message": f"File {file.filename} has been successfully uploaded and indexed.", "file_id": file_id}

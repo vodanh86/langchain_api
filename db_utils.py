@@ -76,18 +76,20 @@ def create_document_store():
                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
                     dept_id INTEGER,
                     filename TEXT,
+                    upload_link TEXT,
+                    effective_date TEXT,
                     upload_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     conn.close()
 
 
-def insert_document_record(dept_id, filename):
+def insert_document_record(dept_id, filename, upload_link, effective_date):
     db_logger.info(
-        f"Inserting document record into 'document_store': filename={filename}.")
+        f"Inserting document record into 'document_store': filename={filename}, upload_link={upload_link}, effective_date={effective_date}.")
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO document_store (filename, dept_id) VALUES (?, ?)",
-        (filename, dept_id)
+        "INSERT INTO document_store (filename, dept_id, upload_link, effective_date) VALUES (?, ?, ?, ?)",
+        (filename, dept_id, upload_link, effective_date)
     )
     file_id = cursor.lastrowid
     conn.commit()
@@ -117,9 +119,9 @@ def get_all_documents(dept_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     if dept_id == 0:
-        cursor.execute("SELECT id, filename, dept_id, upload_timestamp FROM document_store  ORDER BY upload_timestamp DESC")
+        cursor.execute("SELECT id, filename, dept_id, upload_timestamp, upload_link, effective_date FROM document_store  ORDER BY upload_timestamp DESC")
     else:
-        cursor.execute("SELECT id, filename, dept_id, upload_timestamp FROM document_store WHERE dept_id = ? ORDER BY upload_timestamp DESC", (dept_id,))
+        cursor.execute("SELECT id, filename, dept_id, upload_timestamp, upload_link, effective_date FROM document_store WHERE dept_id = ? ORDER BY upload_timestamp DESC", (dept_id,))
     documents = cursor.fetchall()
     conn.close()
     db_logger.info(f"Fetched {len(documents)} documents.")

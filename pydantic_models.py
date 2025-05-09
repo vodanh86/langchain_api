@@ -19,9 +19,11 @@ class QueryResponse(BaseModel):
 
 class DocumentInfo(BaseModel):
     id: int
-    dept_id: int
     filename: str
-    upload_timestamp: datetime
+    dept_id: int
+    upload_link: str
+    effective_date: str
+    upload_timestamp: str
 
 class DeleteFileRequest(BaseModel):
     file_id: int
