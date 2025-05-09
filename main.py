@@ -6,9 +6,8 @@ from chroma_utils import index_document_to_chroma, delete_doc_from_chroma
 import os
 import uuid
 import json
-import logging
+from logger import app_logger
 
-logging.basicConfig(filename='data/app.log', level=logging.INFO)
 app = FastAPI()
 
 # Lấy giới hạn số câu hỏi từ file .env
@@ -21,7 +20,7 @@ def chat(query_input: QueryInput):
 
     user_id = query_input.session_id  # Giả sử `user_id` là một trường trong request
     session_id = query_input.session_id
-    logging.info(
+    app_logger.info(
         f"Session ID: {session_id}, User Query: {query_input.question}, Model: {query_input.model.value}")
     if not session_id:
         session_id = str(uuid.uuid4())
@@ -53,7 +52,7 @@ def chat(query_input: QueryInput):
     answer = answer['answer']
     #answer = answer['answer'] + "\n\n" + "\n".join(references)
     insert_application_logs(session_id, query_input.question, answer, query_input.model.value)
-    logging.info(f"Session ID: {session_id}, AI Response: {answer}")
+    app_logger.info(f"Session ID: {session_id}, AI Response: {answer}")
     return QueryResponse(answer=answer, contexts = str(contexts), session_id=session_id, model=query_input.model)
 
 from fastapi import UploadFile, File, HTTPException

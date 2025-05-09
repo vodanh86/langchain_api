@@ -1,8 +1,7 @@
 import sqlite3
 from datetime import datetime
-import logging
+from logger import db_logger
 
-logging.basicConfig(filename='data/db.log', level=logging.INFO)
 DB_NAME = "data/rag_app.db"
 
 # Dictionary lưu số lượt câu hỏi của người dùng
@@ -22,13 +21,13 @@ def increment_user_question_count(user_id: str):
         user_question_count[key] = 1
 
 def get_db_connection():
-    logging.info("Establishing database connection.")
+    db_logger.info("Establishing database connection.")
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
     return conn
 
 def create_application_logs():
-    logging.info("Creating table 'application_logs' if it does not exist.")
+    db_logger.info("Creating table 'application_logs' if it does not exist.")
     conn = get_db_connection()
     conn.execute('''CREATE TABLE IF NOT EXISTS application_logs
                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,7 +40,7 @@ def create_application_logs():
 
 
 def insert_application_logs(session_id, user_query, gpt_response, model):
-    logging.info(
+    db_logger.info(
         f"Inserting log into 'application_logs': session_id={session_id}, user_query={user_query}, model={model}")
     conn = get_db_connection()
     conn.execute('INSERT INTO application_logs (session_id, user_query, gpt_response, model) VALUES (?, ?, ?, ?)',
@@ -51,7 +50,7 @@ def insert_application_logs(session_id, user_query, gpt_response, model):
 
 
 def get_chat_history(session_id):
-    logging.info(
+    db_logger.info(
         f"Fetching the last 10 chat history entries for session_id={session_id}.")
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -71,7 +70,7 @@ def get_chat_history(session_id):
 
 
 def create_document_store():
-    logging.info("Creating table 'document_store' if it does not exist.")
+    db_logger.info("Creating table 'document_store' if it does not exist.")
     conn = get_db_connection()
     conn.execute('''CREATE TABLE IF NOT EXISTS document_store
                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,7 +81,7 @@ def create_document_store():
 
 
 def insert_document_record(dept_id, filename):
-    logging.info(
+    db_logger.info(
         f"Inserting document record into 'document_store': filename={filename}.")
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -93,7 +92,7 @@ def insert_document_record(dept_id, filename):
     file_id = cursor.lastrowid
     conn.commit()
     conn.close()
-    logging.info(f"Document record inserted with id={file_id}.")
+    db_logger.info(f"Document record inserted with id={file_id}.")
     return file_id
 
 def get_document_by_id(file_id: int):
@@ -104,17 +103,17 @@ def get_document_by_id(file_id: int):
     return dict(document) if document else None
 
 def delete_document_record(file_id):
-    logging.info(
+    db_logger.info(
         f"Deleting document record from 'document_store': file_id={file_id}.")
     conn = get_db_connection()
     conn.execute('DELETE FROM document_store WHERE id = ?', (file_id,))
     conn.commit()
     conn.close()
-    logging.info(f"Document record with id={file_id} deleted successfully.")
+    db_logger.info(f"Document record with id={file_id} deleted successfully.")
     return True
 
 def get_all_documents(dept_id):
-    logging.info("Fetching all documents from 'document_store'.")
+    db_logger.info("Fetching all documents from 'document_store'.")
     conn = get_db_connection()
     cursor = conn.cursor()
     if dept_id == 0:
@@ -123,7 +122,7 @@ def get_all_documents(dept_id):
         cursor.execute("SELECT id, filename, dept_id, upload_timestamp FROM document_store WHERE dept_id = ? ORDER BY upload_timestamp DESC", (dept_id,))
     documents = cursor.fetchall()
     conn.close()
-    logging.info(f"Fetched {len(documents)} documents.")
+    db_logger.info(f"Fetched {len(documents)} documents.")
     return [dict(doc) for doc in documents]
 
 
