@@ -8,7 +8,7 @@ app_logger.setLevel(logging.INFO)
 
 # Sử dụng TimedRotatingFileHandler cho ứng dụng
 app_handler = TimedRotatingFileHandler(
-    "logs/app.log", when="midnight", interval=1, backupCount=7, encoding="utf-8"
+    "data/app.log", when="midnight", interval=1, backupCount=7, encoding="utf-8"
 )
 app_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 app_handler.setFormatter(app_formatter)
@@ -21,7 +21,7 @@ db_logger.setLevel(logging.INFO)
 
 # Sử dụng TimedRotatingFileHandler cho cơ sở dữ liệu
 db_handler = TimedRotatingFileHandler(
-    "logs/db.log", when="midnight", interval=1, backupCount=7, encoding="utf-8"
+    "data/db.log", when="midnight", interval=1, backupCount=7, encoding="utf-8"
 )
 db_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 db_handler.setFormatter(db_formatter)
