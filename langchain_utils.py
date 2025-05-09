@@ -1,10 +1,10 @@
 from langchain_openai import AzureChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.chains import create_history_aware_retriever, create_retrieval_chain
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, PromptTemplate
+from langchain.chains import create_history_aware_retriever, create_retrieval_chain, load_summarize_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from hvac_util import get_azure_openai_config
-from chroma_utils import vectorstore
+from chroma_utils import vectorstore, load_document
 retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
 
 # Lấy cấu hình từ Azure OpenAI
@@ -20,6 +20,22 @@ contextualize_q_system_prompt = (
     "without the chat history. Do NOT answer the question, "
     "just reformulate it if needed and otherwise return it as is."
 )
+
+    # Prompt tùy chỉnh để tóm tắt theo đầu mục và ý nhỏ
+summary_prompt = """
+    You are a highly intelligent AI assistant. Summarize the following document into major headings, each with subpoints. 
+    Ensure that:
+    - Document name: name extraced from content
+    - The summary is in Vietnamese.
+    - There is no limit on the output length.
+    - Major headings are numbered (1., 2., 3., ...).
+    - The content is clear, complete, and accurate.
+
+    Here is the document content:
+    {text}
+
+    Please return the summary in the requested format.
+    """
 
 contextualize_q_prompt = ChatPromptTemplate.from_messages([
     ("system", contextualize_q_system_prompt),
@@ -54,3 +70,20 @@ def get_rag_chain(model="gpt-4o-mini"):
     rag_chain = create_retrieval_chain(
         history_aware_retriever, question_answer_chain)
     return rag_chain
+
+def summarize_document(file_path: str, file_name: str) -> str:
+    # Load tài liệu từ file
+    documents = load_document(file_path)
+    
+    # Tạo chain tóm tắt
+    llm = AzureChatOpenAI(
+        azure_ad_token=azure_config["api_key"],
+        azure_endpoint=azure_config["endpoint"],
+        azure_deployment=azure_config["deployment_name"],
+        api_version=azure_config["api_version"],
+        temperature=0,
+    )
+    summarize_chain = load_summarize_chain(llm, chain_type="stuff", prompt=PromptTemplate(template=summary_prompt, input_variables=["text"]))
+    # Tóm tắt tài liệu
+    summary = file_name + " " + summarize_chain.run(documents)
+    return summary

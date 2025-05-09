@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from pydantic_models import QueryInput, QueryResponse, DocumentInfo, DeleteFileRequest
-from langchain_utils import get_rag_chain
+from langchain_utils import get_rag_chain, summarize_document
 from db_utils import insert_application_logs, get_chat_history, get_all_documents, insert_document_record, delete_document_record, increment_user_question_count, get_user_question_count, get_document_by_id
 from chroma_utils import index_document_to_chroma, delete_doc_from_chroma
 import os
@@ -68,14 +68,16 @@ def upload_and_index_document(file: UploadFile = File(...), dept_id: int = Form(
         raise HTTPException(status_code=400, detail=f"Unsupported file type. Allowed types are: {', '.join(allowed_extensions)}")
     
     temp_file_path = f"temp_{file.filename}"
-    
+
     try:
         # Save the uploaded file to a temporary file
         with open(temp_file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
+        # Tóm tắt tài liệu
+        summary = summarize_document(temp_file_path, file.filename)
         file_id = insert_document_record(dept_id, file.filename)
-        success = index_document_to_chroma(temp_file_path, file_id)
+        success = index_document_to_chroma(temp_file_path, file_id, summary)
         
         if success:
             return {"message": f"File {file.filename} has been successfully uploaded and indexed.", "file_id": file_id}

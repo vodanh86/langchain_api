@@ -18,10 +18,10 @@ embedding_function = AzureOpenAIEmbeddings(
     # openai_api_version=..., # If not provided, will read env variable AZURE_OPENAI_API_VERSION
 )
 
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=200, length_function=len)
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200, length_function=len)
 vectorstore = Chroma(persist_directory="./data/chroma_db", embedding_function=embedding_function)
 
-def load_and_split_document(file_path: str):
+def load_document(file_path: str) -> List[Document]:
     if file_path.endswith('.pdf'):
         try:
             # Thử tải bằng loader bình thường
@@ -56,16 +56,23 @@ def load_and_split_document(file_path: str):
         documents = loader.load()
     else:
         raise ValueError(f"Unsupported file type: {file_path}")
-    
+
+    return documents
+
+def load_and_split_document(file_path: str):
+    documents = load_document(file_path)
     return text_splitter.split_documents(documents)
 
-def index_document_to_chroma(file_path: str, file_id: int) -> bool:
+def index_document_to_chroma(file_path: str, file_id: int, summary) -> bool:
     try:
         splits = load_and_split_document(file_path)
+        metadata = {}
         # Add metadata to each split
         for split in splits:
             split.metadata['file_id'] = file_id
+            metadata = split.metadata
         vectorstore.add_documents(splits)
+        vectorstore.add_documents([Document(page_content=summary, metadata=metadata)])
         # vectorstore.persist()
         return True
     except Exception as e:
