@@ -11,7 +11,8 @@ retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
 # Lấy cấu hình từ Azure OpenAI
 azure_config = get_azure_openai_config()
 output_parser = StrOutputParser()
-
+# Khởi tạo RAG Chain một lần
+rag_chain_cache = None
 
 # Set up prompts and chains
 contextualize_q_system_prompt = (
@@ -46,7 +47,8 @@ contextualize_q_prompt = ChatPromptTemplate.from_messages([
 
 
 qa_prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are an AI assistant for An Binh Bank. Provide accurate, concise, and clear answers strictly based on the bank's internal guidelines and provided context. Do not make assumptions or provide information outside the given context. Always use Vietnamese. Ensure confidentiality and refer to internal documents when necessary. Always include your sources or references at the end of each response, such as: 'Source: An Bình Bank Internal Guidelines.'. "
+    ("system", "You are an AI assistant for An Binh Bank. Provide accurate, concise, and clear answers strictly based on the bank's internal guidelines and provided context. Do not make assumptions or provide information outside the given context. Always use Vietnamese. Ensure confidentiality and refer to internal documents when necessary."
+    "If the user's question is relevant to the provided context, include the names of the referenced files in the response. Otherwise, do not include any file references. "
     "If user ask for list of documents, provide the Available Documents in the format: '1. Document Name 1, 2. Document Name 2, ...'"),
     ("system", "Context: {context}"),
     ("system", "Available Documents: {documents}"),  # Thêm danh sách tài liệu vào prompt
@@ -54,8 +56,13 @@ qa_prompt = ChatPromptTemplate.from_messages([
     ("human", "{input}")
 ])
 
+def get_rag_chain_cached(model="gpt-4o"):
+    global rag_chain_cache
+    if rag_chain_cache is None:
+        rag_chain_cache = get_rag_chain(model)
+    return rag_chain_cache
 
-def get_rag_chain(model="gpt-4o-mini"):
+def get_rag_chain(model):
 
     llm = AzureChatOpenAI(
         azure_ad_token=azure_config["api_key"],

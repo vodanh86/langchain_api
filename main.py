@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from pydantic_models import QueryInput, QueryResponse, DocumentInfo, DeleteFileRequest
-from langchain_utils import get_rag_chain, summarize_document
+from langchain_utils import get_rag_chain_cached, summarize_document
 from db_utils import insert_application_logs, get_chat_history, get_all_documents, insert_document_record, delete_document_record, increment_user_question_count, get_user_question_count, get_document_by_id
 from chroma_utils import index_document_to_chroma, delete_doc_from_chroma
 import os
@@ -13,6 +13,8 @@ app = FastAPI()
 
 # Lấy giới hạn số câu hỏi từ file .env
 MAX_QUESTIONS_PER_DAY = int(os.getenv("MAX_QUESTIONS_PER_DAY", 10))
+
+rag_chain_cache = None
 
 @app.post("/chat", response_model=QueryResponse)
 def chat(query_input: QueryInput):
@@ -36,7 +38,7 @@ def chat(query_input: QueryInput):
     increment_user_question_count(user_id)
 
     chat_history = get_chat_history(session_id)
-    rag_chain = get_rag_chain(query_input.model.value)
+    rag_chain = get_rag_chain_cached(query_input.model.value)
     answer = rag_chain.invoke({
         "input": query_input.question,
         "chat_history": chat_history
