@@ -102,7 +102,7 @@ def summarize_document(file_path: str, file_name: str) -> str:
         azure_endpoint=azure_config["endpoint"],
         azure_deployment=azure_config["deployment_name"],
         api_version=azure_config["api_version"],
-        temperature=0.05,
+        temperature=0.01,
     )
     summarize_chain = load_summarize_chain(llm, chain_type="stuff", prompt=PromptTemplate(
         template=summary_prompt, input_variables=["text"]))
