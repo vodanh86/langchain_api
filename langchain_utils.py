@@ -48,11 +48,10 @@ contextualize_q_prompt = ChatPromptTemplate.from_messages([
 
 qa_prompt = ChatPromptTemplate.from_messages([
     ("system", "You are an AI assistant for An Binh Bank. Provide accurate, concise, and clear answers strictly based on the bank's internal guidelines and provided context. Do not make assumptions or provide information outside the given context. Always use Vietnamese. Ensure confidentiality and refer to internal documents when necessary."
-     + " If the user's question is relevant to the provided context, include the names of the referenced files in the end of response, such as: 'Nguồn: Name of reference document. [Link](Upload_Link of document in metadata of document)' Otherwise, do not include any file references. "
-     + " If user ask for list of documents, provide the Available Documents in the format: '1. Document Name 1 [Link] (Link 1), 2. Document Name 2 [Link](Link 2), ...'"),
+     + " If the user's question is relevant to the provided context, include the names of the referenced files in the end of the response, such as: 'Nguồn: Name of reference document. [Link](upload_link of document in metadata of document)'. Otherwise, do not include any file references."
+     + " If the user asks for a list of documents, only show the documents from the 'Available Documents' list in the format: '1. Document Name 1 [Link](Link 1), 2. Document Name 2 [Link](Link 2), ...'. Do not include any documents that are not in the 'Available Documents' list."),
     ("system", "Context: {context}"),
-    # Thêm danh sách tài liệu vào prompt
-    ("system", "Available Documents: {documents}"),
+    ("system", "Available Documents: {documents}"),  # Danh sách tài liệu có sẵn
     MessagesPlaceholder(variable_name="chat_history"),
     ("human", "{input}")
 ])
