@@ -10,7 +10,7 @@ def get_azure_openai_config():
     """
     Lấy thông tin cấu hình Azure OpenAI từ file .env
     """
-    '''
+    #
     client = hvac.Client(
         url='https://vault.abbank.vn',
         token=os.environ.get("VAULT_TOKEN"),)
@@ -18,9 +18,9 @@ def get_azure_openai_config():
     read_response = client.secrets.kv.read_secret_version(
         path='ai', mount_point='ai-platform')
     api_key = read_response['data']['data']['ChatGPTKey']
-    os.environ["AZURE_OPENAI_API_KEY" = api_key'''
+    os.environ["AZURE_OPENAI_API_KEY"] = api_key
     
-    api_key = os.environ.get("AZURE_OPENAI_API_KEY")
+    #api_key = os.environ.get("AZURE_OPENAI_API_KEY")
     endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
     deployment_name = os.environ.get("AZURE_OPENAI_DEPLOYMENT_NAME")
     api_version = os.environ.get("AZURE_OPENAI_API_VERSION", "2023-05-15")
