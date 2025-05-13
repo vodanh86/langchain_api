@@ -10,9 +10,33 @@ retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
 
 # Lấy cấu hình từ Azure OpenAI
 azure_config = get_azure_openai_config()
+llm = AzureChatOpenAI(
+    azure_ad_token=azure_config["api_key"],
+    azure_endpoint=azure_config["endpoint"],
+    azure_deployment=azure_config["deployment_name"],
+    api_version=azure_config["api_version"],
+    temperature=0,
+)
 output_parser = StrOutputParser()
 # Khởi tạo RAG Chain một lần
 rag_chain_cache = None
+
+check_query_prompt = """
+You are an intelligent assistant. Classify the following user query into one of the following categories:
+1. "valid" - if the query is meaningful and specific.
+2. "nonsense" - if the query is meaningless or nonsensical.
+3. "general" - if the query is a general question that does not require specific context.
+
+Respond with only one of the three labels: "valid", "nonsense", or "general".
+
+Query: {query}
+"""
+
+def classify_query(query: str) -> str:
+    prompt = check_query_prompt.format(query=query)
+    response = llm.invoke([{"role": "system", "content": prompt}])
+    print(response.content)
+    return response.content
 
 # Set up prompts and chains
 contextualize_q_system_prompt = (
@@ -64,15 +88,6 @@ def get_rag_chain_cached(model="gpt-4o"):
 
 
 def get_rag_chain(model):
-
-    llm = AzureChatOpenAI(
-        azure_ad_token=azure_config["api_key"],
-        azure_endpoint=azure_config["endpoint"],
-        azure_deployment=azure_config["deployment_name"],
-        api_version=azure_config["api_version"],
-        temperature=0,
-    )
-
     # Lấy danh sách tài liệu từ VectorDB
     docs = vectorstore.get(where={"is_summary": True})
     document_set = set()
