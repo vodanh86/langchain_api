@@ -14,14 +14,12 @@ with open(file_path, "r") as file:
 account_number_pattern = r"\b\d{10,16}\b"
 
 def detect_sensitive_info(text):
-    print(f"Text: {text}")
     # Phát hiện email
     email = re.search(email_pattern, text)
     if email:
         return True
     
     for pattern in account_patterns:
-        print(f"Pattern: {pattern}")
         if re.search(pattern, text):
             return True  # Nếu tìm thấy bất kỳ pattern nào khớp, trả về True
     
