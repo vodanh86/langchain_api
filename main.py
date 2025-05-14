@@ -5,6 +5,7 @@ from pydantic_models import QueryInput, QueryResponse, DocumentInfo, DeleteFileR
 from langchain_utils import get_rag_chain_cached, summarize_document, classify_query
 from db_utils import insert_application_logs, get_chat_history, get_all_documents, insert_document_record, delete_document_record, increment_user_question_count, get_user_question_count, get_document_by_id
 from chroma_utils import index_document_to_chroma, delete_doc_from_chroma
+from pii import detect_sensitive_info
 import os
 import uuid
 import json
@@ -28,6 +29,10 @@ def chat(query_input: QueryInput):
     if not session_id:
         session_id = str(uuid.uuid4())
 
+    if detect_sensitive_info(query_input.question):
+        answer = "Câu hỏi của bạn chứa thông tin email hoặc số tài khoản và không thể xử lý."
+        return QueryResponse(answer=answer, contexts="", session_id=session_id, model=query_input.model)
+ 
     # Kiểm tra số lượng câu hỏi của người dùng
     question_count = get_user_question_count(user_id) if user_id else 0
     if question_count >= MAX_QUESTIONS_PER_DAY:
