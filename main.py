@@ -4,7 +4,7 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from pydantic_models import QueryInput, QueryResponse, DocumentInfo, DeleteFileRequest
 from langchain_utils import get_rag_chain_cached, summarize_document, classify_query
 from db_utils import insert_application_logs, get_chat_history, get_all_documents, insert_document_record, delete_document_record, increment_user_question_count, get_user_question_count, get_document_by_id
-from chroma_utils import index_document_to_chroma, delete_doc_from_chroma
+from chroma_utils import index_document_to_chroma, delete_doc_from_chroma, get_documents_list
 from pii import detect_sensitive_info
 import os
 import uuid
@@ -15,9 +15,9 @@ app = FastAPI()
 
 # Lấy giới hạn số câu hỏi từ file .env
 MAX_QUESTIONS_PER_DAY = int(os.getenv("MAX_QUESTIONS_PER_DAY", 10))
-
+DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "gpt-4o")
 rag_chain_cache = None
-
+documnent_list = get_documents_list()
 
 @app.post("/chat", response_model=QueryResponse)
 def chat(query_input: QueryInput):
@@ -58,7 +58,8 @@ def chat(query_input: QueryInput):
     rag_chain = get_rag_chain_cached(query_input.model.value)
     answer = rag_chain.invoke({
         "input": query_input.question,
-        "chat_history": chat_history
+        "chat_history": chat_history,
+        "documents": documnent_list,
     })
 
     contexts = answer["context"]
@@ -77,6 +78,7 @@ def chat(query_input: QueryInput):
 
 @app.post("/upload-doc")
 def upload_and_index_document(file: UploadFile = File(...), dept_id: int = Form(...), upload_link: str = Form(...), effective_date: str = Form(...),):
+    global documnent_list
     allowed_extensions = ["pdf", "docx", "html",
                           "txt", "csv", "json", "xlsx", "xlsx", "pptx"]
     file_extension = os.path.splitext(file.filename)[1].lower().strip(".")
@@ -97,7 +99,7 @@ def upload_and_index_document(file: UploadFile = File(...), dept_id: int = Form(
             dept_id, file.filename, upload_link, effective_date)
         success = index_document_to_chroma(
             temp_file_path, file_id, summary, upload_link, effective_date)
-
+        documnent_list = get_documents_list()
         if success:
             return {"message": f"File {file.filename} has been successfully uploaded and indexed.", "file_id": file_id}
         else:
@@ -116,6 +118,7 @@ def list_documents(dept_id: int = 0):
 
 @app.post("/delete-doc")
 def delete_document(request: DeleteFileRequest):
+    global documnent_list
     # Kiểm tra quyền truy cập
     document = get_document_by_id(request.file_id)
     if not document:
@@ -130,6 +133,7 @@ def delete_document(request: DeleteFileRequest):
     if chroma_delete_success:
         # If successfully deleted from Chroma, delete from our database
         db_delete_success = delete_document_record(request.file_id)
+        documnent_list = get_documents_list()
         if db_delete_success:
             return {"message": f"Successfully deleted document with file_id {request.file_id} from the system."}
         else:

@@ -18,7 +18,7 @@ embedding_function = AzureOpenAIEmbeddings(
     # openai_api_version=..., # If not provided, will read env variable AZURE_OPENAI_API_VERSION
 )
 
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200, length_function=len)
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=3000, chunk_overlap=200, length_function=len)
 vectorstore = Chroma(persist_directory="./data/chroma_db", embedding_function=embedding_function)
 
 def load_document(file_path: str) -> List[Document]:
@@ -80,6 +80,19 @@ def index_document_to_chroma(file_path: str, file_id: int, summary, upload_link,
     except Exception as e:
         print(f"Error indexing document: {e}")
         return False
+
+def get_documents_list():
+        # Lấy danh sách tài liệu từ VectorDB
+    docs = vectorstore.get(where={"is_summary": True})
+    document_set = set()
+
+    for doc in docs["metadatas"]:
+        link = doc.get("upload_link")
+        document_set.add(f"{doc['source']} Link: {doc['upload_link']}" if link else doc['source'])
+
+    document_list_str = "\n".join(document_set)
+    print("Available documents:", document_list_str)
+    return document_list_str
 
 def delete_doc_from_chroma(file_id: int):
     try:

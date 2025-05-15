@@ -51,7 +51,7 @@ contextualize_q_system_prompt = (
 summary_prompt = """
     You are a highly intelligent AI assistant. Summarize the following document into major headings, each with subpoints. 
     Ensure that:
-    - Document name: name extraced from content
+    - Document name: name extracted from content
     - The summary is in Vietnamese.
     - There is no limit on the output length.
     - Major headings are numbered (1., 2., 3., ...).
@@ -83,25 +83,18 @@ qa_prompt = ChatPromptTemplate.from_messages([
 def get_rag_chain_cached(model="gpt-4o"):
     global rag_chain_cache
     if rag_chain_cache is None:
+        print("Creating new RAG chain...")
         rag_chain_cache = get_rag_chain(model)
     return rag_chain_cache
 
 
 def get_rag_chain(model):
-    # Lấy danh sách tài liệu từ VectorDB
-    docs = vectorstore.get(where={"is_summary": True})
-    document_set = set()
 
-    for doc in docs["metadatas"]:
-        link = doc.get("upload_link")
-        document_set.add(f"{doc['source']} Link: {doc['upload_link']}" if link else doc['source'])
-
-    document_list_str = "\n".join(document_set)
 
     history_aware_retriever = create_history_aware_retriever(
         llm, retriever, contextualize_q_prompt)
     question_answer_chain = create_stuff_documents_chain(
-        llm, qa_prompt.partial(documents=document_list_str))
+        llm, qa_prompt)
     rag_chain = create_retrieval_chain(
         history_aware_retriever, question_answer_chain)
     return rag_chain
