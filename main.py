@@ -65,7 +65,7 @@ def chat(query_input: QueryInput):
     contexts = answer["context"]
     references = []
     for context in contexts:
-        metadata = context.metadata
+        references.append({"id": context.id, "metadata": context.metadata, "page_content": context.page_content})  
         # references.append(f"Trang: {metadata['page']}, Tài liệu: {metadata['source']}\n")
 
     answer = answer['answer']
@@ -73,7 +73,7 @@ def chat(query_input: QueryInput):
     insert_application_logs(session_id, query_input.question,
                             answer, query_input.model.value)
     app_logger.info(f"Session ID: {session_id}, AI Response: {answer}")
-    return QueryResponse(answer=answer, contexts=str(contexts), session_id=session_id, model=query_input.model)
+    return QueryResponse(answer=answer, contexts=json.dumps(references), session_id=session_id, model=query_input.model)
 
 
 @app.post("/upload-doc")
